@@ -1,0 +1,30 @@
+.detail-dialog.profile-detail-dialog {
+  width: min(460px, calc(100% - 24px));
+  max-height: calc(100svh - 24px);
+  border: 0;
+  background: transparent;
+  color: #fff;
+  overflow: auto;
+  scrollbar-width: none;
+  box-shadow: none;
+}
+.profile-detail-dialog::backdrop { background: #251d376b; backdrop-filter: blur(10px); }
+.profile-detail-dialog .dialog-inner { padding: 48px 24px 48px; }
+.profile-detail-dialog .dialog-close {
+  position: absolute; top: 0; right: 2px; float: none; margin: 0;
+  background: #ffffffeb; border: 1px solid #ffffff70; color: #72578d;
+}
+.profile-card-view { display: flex; flex-direction: column; align-items: center; gap: 20px; }
+.profile-card-view .profile-card { width: min(360px, calc((100svh - 190px) * .8)); }
+.profile-card-view .profile-card__photo { object-fit: contain; }
+.profile-card-view .profile-card__body { box-shadow: 0 10px 22px #251d3726; }
+.profile-card-view .profile-card__meta { text-align: left; align-items: flex-start; }
+.profile-card-view .profile-card__footer { flex-wrap: wrap; }
+.profile-card-view .profile-card__meta { flex-basis: 54px; }
+.profile-card-view .profile-card__contact { margin-left: auto; padding-inline: 8px; font-size: 12px; white-space: nowrap; }
+.profile-card-view .profile-card__contact svg { width: 16px; height: 16px; }
+.about-photo-stack { cursor: pointer; }
+.about-photo-stack:focus-visible { outline: 2px solid #9278ad; outline-offset: 12px; border-radius: 2px; }
+@media (max-width: 700px) {
+  .profile-detail-dialog .dialog-inner { padding: 46px 14px 40px; }
+}

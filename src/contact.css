@@ -1,0 +1,162 @@
+/* Open editorial footer: small information above an oversized signature. */
+/* Let the main content cover the moving footer where the two overlap. */
+main { position: relative; z-index: 1; }
+.contact-reveal { position: relative; z-index: 0; }
+.contact-reveal > .contact { transform: translateY(var(--contact-reveal-y, 0px)); }
+@supports (animation-timeline: view()) and (animation-range: entry 0% entry 100%) {
+  .contact-reveal { view-timeline: --contact-reveal block; view-timeline-inset: 0; }
+  .contact-reveal > .contact {
+    animation: contact-uncover linear both;
+    animation-timeline: --contact-reveal;
+    animation-range: entry 0% entry 100%;
+    will-change: transform;
+  }
+  @keyframes contact-uncover {
+    from { transform: translate3d(0, calc(-1 * var(--contact-reveal-distance, 100vh)), 0); }
+    to { transform: translate3d(0, 0, 0); }
+  }
+}
+.contact {
+  --accent: #fff;
+  --line: #ffffff40;
+  overflow: clip;
+  border-radius: 32px 32px 0 0;
+  background: var(--violet, #9278ad);
+  color: #fff;
+  padding: 60px 0 0;
+  min-height: max(615px, 75svh);
+}
+.contact-shell {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: calc(max(615px, 75svh) - 60px);
+}
+.contact-topline {
+  display: grid;
+  grid-template-columns: 150px 1fr auto;
+  align-items: baseline;
+  gap: 28px;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.contact-small-name { font-weight: 600; letter-spacing: -.03em; color: #fff; }
+.contact-topline > p { color: #fff; }
+.contact-body { display: grid; grid-template-columns: 1.5fr 1fr; gap: clamp(40px, 4.5vw, 80px); margin-top: 32px; margin-bottom: 40px; }
+.contact-invitation { min-width: 0; color: #fff; }
+.contact-conversation {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0;
+  background: transparent;
+  text-align: left;
+  font-size: clamp(18px, 1.3vw, 22px);
+  font-weight: 400;
+  line-height: 1.6;
+}
+.contact-conversation svg { width: 1em; height: 1em; transition: transform .2s; }
+.contact-conversation:hover svg { transform: translate(3px, -3px); }
+.contact-statement { margin-top: 14px; font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif; font-size: clamp(40px, 5.55vw, 94px); font-weight: 900; line-height: 1.08; letter-spacing: -.065em; text-align: left; }
+.contact-statement > span { display: block; white-space: nowrap; }
+.contact-statement-effect { position: relative; margin-top: 14px; }
+.contact-statement-effect .contact-statement { margin-top: 0; }
+.contact-glass-layer { position: absolute; inset: -24px; pointer-events: none; }
+.contact-statement-effect:has(.fluid-glass[data-ready="true"]) .contact-statement { opacity: 0; }
+.contact-conversation { position: relative; z-index: 1; }
+.contact-columns {
+  display: grid;
+  transform: translateX(-48px);
+  grid-template-columns: .8fr 1.2fr;
+  align-content: start;
+  gap: 32px clamp(24px, 3vw, 54px);
+  padding-top: calc(clamp(18px, 1.3vw, 22px) * 1.6 + 14px);
+}
+.contact-column { min-width: 0; font-size: 13px; line-height: 1.85; }
+.contact-methods, .contact-return { grid-column: 2; }
+.contact-column h3 { font-size: 12px; font-weight: 400; line-height: 1.6; margin-bottom: 20px; }
+.contact-addresses { margin: 0; }
+.contact-addresses > div { display: grid; grid-template-columns: 18px minmax(0, 1fr); align-items: center; gap: 10px; }
+.contact-addresses > div + div { margin-top: 20px; }
+.contact-addresses dt { position: relative; display: flex; align-items: center; }
+.contact-addresses dd { margin: 0; overflow-wrap: anywhere; }
+.contact-method-icon { display: block; width: 18px; height: 18px; flex-shrink: 0; }
+.contact-wechat-icon { background: currentColor; -webkit-mask: url('/assets/software/wechat.svg') center / contain no-repeat; mask: url('/assets/software/wechat.svg') center / contain no-repeat; }
+.contact-addresses a:hover { text-decoration: underline; text-underline-offset: 5px; }
+.contact-back-top { display: grid; place-items: center; width: 52px; height: 52px; border: 1px solid #ffffff70; border-radius: 50%; font-size: 24px; transition: color .2s, background .2s; }
+.contact-back-top:hover { color: var(--violet, #9278ad); background: #fff; }
+.contact-large-wordmark {
+  display: block;
+  width: 100vw;
+  max-width: none;
+  align-self: center;
+  margin-top: auto;
+  padding: 0;
+  color: #c8bbd6;
+  line-height: 0;
+}
+.contact-large-wordmark svg { display: block; width: 100%; height: auto; }
+.contact-large-wordmark text {
+  font-family: 'Times New Roman', Georgia, serif;
+  font-size: 1000px;
+  font-weight: 400;
+  letter-spacing: -75px;
+  white-space: nowrap;
+}
+.contact-legal {
+  justify-self: end;
+  text-align: right;
+  color: #fff;
+  font-size: 11px;
+  line-height: 1.9;
+}
+.contact-legal-links { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 0 13px; margin-top: 4px; }
+.contact-legal-links button { background: none; padding: 0; font-size: inherit; line-height: inherit; }
+.contact-legal-links button:hover { text-decoration: underline; text-underline-offset: 3px; }
+.site-information { padding: 60px; }
+.site-information h2 { font-size: 32px; font-weight: 500; line-height: 1.4; }
+.site-information-date { font-size: 11px; margin-top: 14px; }
+.site-information-intro { margin-top: 28px; font-size: 14px; line-height: 1.9; }
+.site-policy-section { margin-top: 28px; }
+.site-policy-section h3 { font-size: 15px; line-height: 1.6; }
+.site-policy-section p { margin-top: 10px; font-size: 13px; line-height: 2; }
+.site-policy-reference { margin-top: 36px; padding-top: 22px; border-top: 1px solid #dedede; font-size: 11px; line-height: 1.9; }
+.site-policy-reference a { text-decoration: underline; text-underline-offset: 4px; }
+.site-map { display: grid; margin-top: 28px; }
+.site-map a { display: grid; grid-template-columns: 90px 1fr 20px; align-items: center; gap: 16px; padding: 20px 0; border-bottom: 1px solid #dedede; font-size: 15px; }
+.site-map small { font-size: 12px; line-height: 1.8; }
+.site-map svg { width: 18px; height: 18px; }
+.site-map a:hover { text-decoration: underline; text-underline-offset: 5px; }
+@media (min-width: 1900px) {
+  .contact-topline, .contact-column { font-size: 15px; }
+  .contact-column h3 { font-size: 14px; }
+}
+@media (max-width: 900px) {
+  .contact-body { grid-template-columns: 1fr; gap: 36px; }
+  .contact-statement { font-size: clamp(36px, 7vw, 66px); }
+  .contact-columns { grid-template-columns: 1fr; gap: 24px; transform: none; padding-top: 0; }
+  .contact-methods, .contact-return { grid-column: auto; }
+}
+@media (max-width: 700px) {
+  .contact-legal { grid-column: 1 / -1; max-width: 100%; font-size: 9px; }
+  .contact-legal-links { gap: 0 10px; }
+  .site-information { padding: 54px 24px 32px; }
+  .site-information h2 { font-size: 26px; }
+  .site-information-intro { font-size: 13px; }
+  .site-policy-section p { font-size: 12px; }
+  .site-map a { grid-template-columns: 70px 1fr 18px; gap: 10px; font-size: 14px; }
+  .site-map small { font-size: 11px; }
+  .contact { padding-top: 60px; min-height: max(585px, 75svh); }
+  .contact-shell { min-height: calc(max(585px, 75svh) - 60px); }
+  .contact-topline { grid-template-columns: auto 1fr; gap: 12px 24px; font-size: 11px; }
+  .contact-body { margin-top: 28px; margin-bottom: 36px; }
+  .contact-statement { font-size: clamp(28px, 8.9vw, 58px); line-height: 1.15; }
+  .contact-columns { grid-template-columns: 1fr; gap: 24px; }
+  .contact-column { font-size: 12px; }
+  .contact-column h3 { margin-bottom: 18px; }
+  .contact-back-top { width: 44px; height: 44px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .contact-conversation svg, .contact-back-top { transition: none; }
+}

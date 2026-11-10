@@ -1,0 +1,52 @@
+/* White and violet chapters between the video hero and the violet footer. */
+:root { --violet: #9278ad; }
+body { background: #fff; }
+
+.about,
+main > .section,
+.detail-dialog {
+  --bg: #fff;
+  --muted: var(--violet);
+  --line: #dedede;
+  --accent: var(--violet);
+  background: #fff;
+  color: var(--violet);
+}
+
+.section-label > span:first-child,
+.section-label .label-en,
+.section-heading p,
+.experience-period,
+.experience-detail p,
+.project-index,
+.project-category { color: var(--violet); }
+
+.experience-item::before { background: var(--violet); }
+
+.filters button { color: var(--violet); }
+.filters button:hover,
+.filters button.active { color: var(--violet); }
+.filters button.active { border-color: var(--violet); }
+.project-arrow { border-color: #ccc; }
+.projects .project-card:hover .project-arrow { background: var(--violet); color: #fff; border-color: var(--violet); }
+
+/* Project typography follows the violet chapter palette. */
+.art-form,
+.art-synth,
+.art-void { color: var(--violet); }
+
+.strength-card { background: #fff; border-color: #dedede; }
+.strength-card:hover { border-color: #777; }
+.skill-top > span,
+.skill-en,
+.strength-card p,
+.skill-tags { color: var(--violet); }
+.skill-tags { border-top-color: #dedede; }
+
+.detail-dialog { border-color: #ddd; }
+.dialog-close { background: #fff; color: var(--violet); border-color: #ddd; }
+.dialog-close:hover { color: #7e6599; }
+.project-description p,
+.contact-dialog > p,
+.contact-row span { color: var(--violet); }
+.primary-button { background: #fff; color: var(--violet); border: 1px solid currentColor; }

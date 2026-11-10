@@ -1,0 +1,36 @@
+.about-institution-button {
+  padding: 0;
+  background: transparent;
+  font: inherit;
+  line-height: inherit;
+  text-align: left;
+  text-decoration: underline;
+  text-decoration-color: #9278ad60;
+  text-underline-offset: 4px;
+}
+.about-institution-button:hover { text-decoration-color: currentColor; }
+.about-institution-button:focus-visible { outline: 2px solid #9278ad; outline-offset: 5px; }
+.detail-dialog.campus-detail-dialog {
+  width: min(1040px, calc(100% - 40px));
+  max-height: calc(100svh - 40px);
+  background: #fff;
+  color: #9278ad;
+  border: 1px solid #c8bbd6;
+  overflow: auto;
+}
+.campus-detail-dialog::backdrop { background: #251d376b; backdrop-filter: blur(10px); }
+.campus-detail-dialog .dialog-close { color: #9278ad; border-color: #c8bbd6; background: #fff; }
+.campus-view { padding: 56px 40px 40px; }
+.campus-view h2 { font-size: clamp(26px, 3vw, 40px); font-weight: 500; }
+.campus-introduction { margin-top: 22px; font-size: 15px; line-height: 2; }
+.campus-gallery { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 28px 24px; margin-top: 32px; align-items: start; }
+.campus-gallery figure { margin: 0; min-width: 0; }
+.campus-gallery figure:first-child { grid-column: 1 / -1; }
+.campus-gallery img { display: block; width: 100%; height: auto; }
+.campus-gallery figcaption { margin-top: 10px; font-size: 13px; line-height: 1.6; }
+@media (max-width: 700px) {
+  .detail-dialog.campus-detail-dialog { width: calc(100% - 24px); max-height: calc(100svh - 24px); }
+  .campus-view { padding: 56px 22px 28px; }
+  .campus-introduction { font-size: 14px; margin-top: 18px; }
+  .campus-gallery { grid-template-columns: minmax(0, 1fr); gap: 24px; margin-top: 24px; }
+}
