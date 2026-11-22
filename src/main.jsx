@@ -17,6 +17,7 @@ import useAboutEntrance from './components/useAboutEntrance';
 import usePortfolioEntrance from './components/usePortfolioEntrance';
 import useContactReveal from './components/useContactReveal';
 import SquishSwitch from './components/SquishSwitch';
+import WorkTrajectory, { TrajectoryPhrase } from './components/WorkTrajectory';
 const AboutScrollPreview = lazy(() => import('./components/AboutScrollPreview'));
 const Folder = lazy(() => import('./components/Folder'));
 const ProfileCardView = lazy(() => import('./components/ProfileCardView'));
@@ -24,16 +25,53 @@ import './styles.css';
 import './hero.css';
 import './about.css';
 import './light-sections.css';
+import './experience.css';
 import './contact.css';
 import './portfolio.css';
 
 function Arrow({ diagonal = false, ...props }) {
   return <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" {...props}><path d={diagonal ? 'M5 19 19 5M5 5h14v14' : 'M4 12h15m-6-6 6 6-6 6'} stroke="currentColor" strokeWidth="1.5" /></svg>;
 }
-function AdaptiveInkText({ children }) {
-  return <span className="adaptive-ink-text">{Array.from(String(children)).map((character, index) => <span data-ink-character key={index}>{character}</span>)}</span>;
+function AdaptiveInkText({ children, stagger = 0 }) {
+  return (
+    <span className="adaptive-ink-text">
+      {Array.from(String(children)).map((character, index) => (
+        <span data-ink-character key={index} style={stagger ? { '--ink-reveal-delay': `${index * stagger}ms` } : undefined}>
+          {character}
+        </span>
+      ))}
+    </span>
+  );
 }
-function Wordmark() { return <a className="logo wordmark" href="#home" aria-label="回到首页"><AdaptiveInkText>{profile.name}</AdaptiveInkText></a>; }
+const WORDMARK_STROKE_WIDTH = 4.6;
+
+function Wordmark() {
+  return (
+    <a className="logo wordmark" href="#home" aria-label={`${profile.name}，回到首页`}>
+      <svg className="wordmark-signature" viewBox="4 0 266 70" fill="none" stroke="currentColor"
+        strokeWidth={WORDMARK_STROKE_WIDTH} strokeLinecap="round" strokeLinejoin="round" data-ink-character="" aria-hidden="true">
+        <path className="wordmark-main-stroke" pathLength="1" d="
+          M7 19 C15 9 32 8 39 13 C34 22 18 32 10 42 C18 38 25 45 34 43 C39 42 44 38 47 34
+          C51 27 55 16 57 11 C60 3 67 5 65 12 C62 20 53 27 47 34 L43 44
+          C48 37 54 31 59 32 C64 33 59 41 61 44 C64 47 69 42 72 37
+          C78 28 89 30 87 36 C84 43 76 48 72 44 C68 40 74 33 79 32 C82 31 86 31 88 33
+          C86 38 83 45 88 45 C92 45 95 40 98 36
+          C103 29 113 31 112 37 C111 43 106 46 102 45 C96 43 98 36 103 33
+          C107 30 111 30 114 34 C116 37 120 36 124 33
+          C130 26 138 13 139 8 C141 2 147 3 146 10 C144 17 134 24 127 30
+          C123 36 118 49 116 55 C114 62 118 64 124 59 C131 52 136 43 133 37
+          C132 35 128 36 130 39 C133 42 139 39 144 35
+          C154 35 157 29 151 29 C146 29 141 36 142 41 C143 48 151 47 158 41 L165 33
+          C168 32 165 38 164 41 C161 49 169 47 176 41 L183 33
+          C180 37 177 45 183 46 C189 47 195 40 198 33 C193 47 188 60 182 64
+          C176 68 172 64 175 59 C180 53 195 49 205 41 L211 33
+          C207 41 207 47 212 46 C218 46 223 40 227 32 C225 38 220 45 226 46 C232 47 238 41 244 38
+        " />
+        <path className="wordmark-detail-strokes" pathLength="1" d="M120 30 C125 29 134 28 139 29 M168 25 l .7 -.5" />
+      </svg>
+    </a>
+  );
+}
 function SectionLabel({ number, children }) { return <div className="section-label"><span>{number}</span>{children}</div>; }
 
 const softwareLoopItems = [
@@ -60,7 +98,102 @@ const softwareLoopItems = [
   </span>,
 }));
 
-function Header() {
+const SITE_ENTRANCE_DURATION = 3000;
+
+function alignEntranceTrails(stroke, trails) {
+  const transform = stroke.getScreenCTM();
+  const bounds = trails.getBoundingClientRect();
+  if (!transform || !bounds.width) return;
+
+  const start = stroke.getPointAtLength(0).matrixTransform(transform);
+  const end = stroke.getPointAtLength(stroke.getTotalLength()).matrixTransform(transform);
+  const left = start.x - bounds.left;
+  const entryY = start.y - bounds.top;
+  const exitX = end.x - bounds.left;
+  const exitY = end.y - bounds.top;
+  const travel = bounds.width - exitX;
+  const wave = Math.min(36, travel * .12);
+  const entryCurve = Math.min(12, left * .3);
+  const entryLift = Math.min(21, left * .7);
+  const x = fraction => exitX + travel * fraction;
+
+  trails.setAttribute('stroke-width', WORDMARK_STROKE_WIDTH * transform.a);
+  trails.querySelector('.site-entrance-lead').setAttribute('d', `
+    M 0 ${entryY + entryLift}
+    C ${left * .30} ${entryY + entryLift} ${left - entryCurve} ${entryY + entryCurve * 1.25} ${left} ${entryY}
+  `);
+  trails.querySelector('.site-entrance-exit').setAttribute('d', `
+    M ${exitX} ${exitY}
+    C ${x(.08)} ${exitY - Math.min(wave, travel * .04)} ${x(.17)} ${exitY - wave} ${x(.25)} ${exitY}
+    S ${x(.43)} ${exitY + wave} ${x(.5)} ${exitY}
+    S ${x(.68)} ${exitY - wave} ${x(.75)} ${exitY}
+    S ${x(.93)} ${exitY + wave} ${bounds.width} ${exitY}
+  `);
+}
+
+function SiteEntrance({ onStageChange }) {
+  const progressRef = useRef(null);
+  const trailsRef = useRef(null);
+
+  useEffect(() => {
+    const motion = matchMedia('(prefers-reduced-motion: reduce)');
+    const signature = progressRef.current?.closest('.header')?.querySelector('.wordmark-signature');
+    const stroke = signature?.querySelector('.wordmark-main-stroke');
+    const trails = trailsRef.current;
+    const alignTrails = () => {
+      if (stroke && trails) alignEntranceTrails(stroke, trails);
+    };
+    const updateMotion = () => {
+      if (motion.matches) onStageChange(null);
+    };
+    let startedAt;
+    let frame;
+    let writingAnimations;
+
+    function updateProgress() {
+      const indicator = progressRef.current;
+      if (!indicator) return;
+      writingAnimations ??= [
+        ...(signature?.getAnimations({ subtree: true }) ?? []),
+        ...(trails?.getAnimations({ subtree: true }) ?? []),
+      ];
+      const now = performance.now();
+      startedAt ??= now;
+      const elapsed = Math.min(now - startedAt, SITE_ENTRANCE_DURATION);
+      for (const animation of writingAnimations) animation.currentTime = elapsed;
+      const percent = Math.floor(elapsed / SITE_ENTRANCE_DURATION * 100);
+      const label = `${percent}%`;
+      if (indicator.textContent !== label) indicator.textContent = label;
+      if (percent < 100) frame = requestAnimationFrame(updateProgress);
+      else onStageChange('revealing');
+    }
+
+    updateMotion();
+    alignTrails();
+    motion.addEventListener('change', updateMotion);
+    window.addEventListener('resize', alignTrails);
+    frame = requestAnimationFrame(updateProgress);
+    return () => {
+      cancelAnimationFrame(frame);
+      motion.removeEventListener('change', updateMotion);
+      window.removeEventListener('resize', alignTrails);
+    };
+  }, [onStageChange]);
+
+  return (
+    <div className="site-entrance" aria-hidden="true" onAnimationEnd={event => {
+      if (event.target === event.currentTarget) onStageChange(null);
+    }}>
+      <svg ref={trailsRef} className="site-entrance-trails" fill="none" stroke="currentColor" strokeLinecap="round">
+        <path className="site-entrance-lead" pathLength="1" />
+        <path className="site-entrance-exit" pathLength="1" />
+      </svg>
+      <div className="site-entrance-progress wrap"><span ref={progressRef}>0%</span></div>
+    </div>
+  );
+}
+
+function Header({ entranceStage, onEntranceStageChange }) {
   const [open, setOpen] = useState(false);
   const [surface, setSurface] = useState('hero');
   const headerRef = useRef(null);
@@ -82,7 +215,22 @@ function Header() {
       observer.disconnect();
     };
   }, []);
-  return <header ref={headerRef} className="header" data-surface={surface}><div className="header-inner wrap"><Wordmark /><button className="menu-toggle" onClick={() => setOpen(!open)} aria-expanded={open} aria-label="切换导航"><AdaptiveInkText>{open ? '关闭 −' : '菜单 +'}</AdaptiveInkText></button><nav className={open ? 'nav is-open' : 'nav'} aria-label="主导航">{[['about', '关于我'], ['experience', '工作经历'], ['projects', '作品展示'], ['contact', '联系我']].map(([id, label]) => <a key={id} href={'#' + id} onClick={() => setOpen(false)}><AdaptiveInkText>{label}</AdaptiveInkText></a>)}</nav></div></header>;
+  return (
+    <header
+      ref={headerRef}
+      className="header"
+      data-surface={surface}
+      data-entrance-stage={entranceStage}
+      style={entranceStage === 'loading' ? { '--entrance-loading-duration': `${SITE_ENTRANCE_DURATION}ms` } : undefined}
+    >
+      {entranceStage && <SiteEntrance onStageChange={onEntranceStageChange} />}
+      <div className="header-inner wrap" inert={Boolean(entranceStage)}>
+        <Wordmark />
+        <button className="menu-toggle" onClick={() => setOpen(!open)} aria-expanded={open} aria-label="切换导航"><AdaptiveInkText>{open ? '关闭 −' : '菜单 +'}</AdaptiveInkText></button>
+        <nav className={open ? 'nav is-open' : 'nav'} aria-label="主导航">{[['about', '关于我'], ['experience', '工作经历'], ['projects', '作品展示'], ['contact', '联系我']].map(([id, label]) => <a key={id} href={'#' + id} onClick={() => setOpen(false)}><AdaptiveInkText>{label}</AdaptiveInkText></a>)}</nav>
+      </div>
+    </header>
+  );
 }
 function HeroParticleIntro() {
   const [compact, setCompact] = useState(() => matchMedia('(max-width: 700px)').matches);
@@ -122,7 +270,7 @@ function HeroParticleIntro() {
     </div>
   );
 }
-function Hero() {
+function Hero({ entering }) {
   const videoRef = useRef(null);
   const playRequested = useRef(false);
   const [playing, setPlaying] = useState(false);
@@ -136,7 +284,11 @@ function Hero() {
       if (visible && !document.hidden && playRequested.current) video.play().catch(() => {});
       else video.pause();
     };
-    const updateMotion = () => { playRequested.current = !reduced.matches; sync(); };
+    const updateMotion = () => {
+      const unavailable = video.error || (video.readyState >= video.HAVE_METADATA && !video.videoWidth);
+      playRequested.current = !entering && !reduced.matches && !unavailable;
+      sync();
+    };
     const observer = new IntersectionObserver(([entry]) => { visible = entry.isIntersecting; sync(); }, { threshold: 0.05 });
     updateMotion();
     observer.observe(video.closest('.hero'));
@@ -147,7 +299,7 @@ function Hero() {
       reduced.removeEventListener('change', updateMotion);
       document.removeEventListener('visibilitychange', sync);
     };
-  }, []);
+  }, [entering]);
   function setVideoPlaying(next) {
     const video = videoRef.current;
     if (!video) return;
@@ -165,12 +317,13 @@ function Hero() {
   return (
     <section className="hero" id="home">
       <div className="hero-media">
-        <img src="/assets/hero-poster.jpg?v=20261103" alt="" fetchPriority="high" />
-        <video ref={videoRef} src="/assets/hero-original.mp4?v=20261103" muted loop playsInline preload="none" data-ready={videoStatus === 'ready'}
+        <img src="/assets/hero-poster.jpg?v=a7e0a22c6c34" alt="" fetchPriority="high" />
+        <video ref={videoRef} src="/assets/hero-original.mp4?v=a7e0a22c6c34" muted loop playsInline preload={entering ? 'auto' : 'none'} data-ready={videoStatus === 'ready'}
           onLoadedMetadata={({ currentTarget }) => { if (!currentTarget.videoWidth) showPoster(currentTarget); }}
-          onLoadedData={({ currentTarget }) => { if (currentTarget.videoWidth) setVideoStatus('ready'); }}
+          onPlay={({ currentTarget }) => setWaitingForVideo(currentTarget.readyState < currentTarget.HAVE_FUTURE_DATA)}
           onWaiting={({ currentTarget }) => setWaitingForVideo(playRequested.current && !currentTarget.paused)}
           onPlaying={({ currentTarget }) => {
+            if (currentTarget.videoWidth) setVideoStatus('ready');
             setWaitingForVideo(false);
             setPlaying(currentTarget.videoWidth > 0);
           }}
@@ -205,9 +358,50 @@ function Hero() {
     </section>
   );
 }
-function About({ onOpenProfile, onOpenCampus }) {
+function About({ onOpenProfile, onOpenCampus, entering }) {
   const aboutRef = useRef(null);
   const visit = useAboutEntrance(aboutRef);
+
+  useLayoutEffect(() => {
+    if (typeof IntersectionObserver === 'undefined') return;
+
+    const lines = aboutRef.current.querySelectorAll(
+      '.about-principles-title, .about-principle-row, .about-services h3, .about-services li, .software-loop-thanks',
+    );
+    for (const line of lines) line.dataset.aboutText = 'waiting';
+    if (entering) return;
+
+    const entranceObserver = new IntersectionObserver(entries => {
+      let lineIndex = 0;
+      for (const { target, isIntersecting } of entries) {
+        if (!isIntersecting || target.dataset.aboutText === 'entered') continue;
+        target.style.setProperty('--about-text-delay', `${lineIndex * 85}ms`);
+        target.dataset.aboutText = 'entered';
+        lineIndex += 1;
+      }
+    }, { rootMargin: '0px 0px -64px' });
+
+    const exitObserver = new IntersectionObserver(entries => {
+      for (const { target, isIntersecting } of entries) {
+        if (!isIntersecting) target.dataset.aboutText = 'waiting';
+      }
+    });
+
+    for (const line of lines) {
+      entranceObserver.observe(line);
+      exitObserver.observe(line);
+    }
+
+    return () => {
+      entranceObserver.disconnect();
+      exitObserver.disconnect();
+      for (const line of lines) {
+        delete line.dataset.aboutText;
+        line.style.removeProperty('--about-text-delay');
+      }
+    };
+  }, [entering]);
+
   return (
     <section ref={aboutRef} className="about about--entrance" id="about" aria-labelledby="about-title" data-entrance="waiting">
       <Suspense fallback={null}><AboutScrollPreview /></Suspense>
@@ -253,29 +447,175 @@ function About({ onOpenProfile, onOpenCampus }) {
     </section>
   );
 }
-function Experience() {
-  const experienceRef = useRef(null);
-  const updateBackgroundInk = useBackgroundInk(experienceRef, '.experience-caption, #experience-title, .experience-period, .experience-detail h3, .experience-detail p', '.experience-background');
+function moveExperiencePhotos(event) {
+  if (event.pointerType !== 'mouse') return;
+
+  const photos = Array.from(event.currentTarget.children, photo => ({
+    photo,
+    bounds: photo.getBoundingClientRect(),
+  }));
+  const nearbyDistance = 56;
+
+  for (const { photo, bounds } of photos) {
+    const halfWidth = bounds.width / 2;
+    const halfHeight = bounds.height / 2;
+    const dx = bounds.left + halfWidth - event.clientX;
+    const dy = bounds.top + halfHeight - event.clientY;
+    const edgeDistance = Math.hypot(Math.max(0, Math.abs(dx) - halfWidth), Math.max(0, Math.abs(dy) - halfHeight));
+    const strength = Math.max(0, 1 - edgeDistance / nearbyDistance);
+    const distance = Math.max(Math.hypot(dx, dy), nearbyDistance);
+    const horizontal = dx / distance * strength;
+    const vertical = dy / distance * strength;
+
+    photo.style.setProperty('--photo-shift-x', `${horizontal * 10}px`);
+    photo.style.setProperty('--photo-shift-y', `${vertical * 8}px`);
+    photo.style.setProperty('--photo-turn', `${horizontal * 2.5}deg`);
+  }
+}
+
+function resetExperiencePhotos(event) {
+  for (const photo of event.currentTarget.children) {
+    photo.style.removeProperty('--photo-shift-x');
+    photo.style.removeProperty('--photo-shift-y');
+    photo.style.removeProperty('--photo-turn');
+  }
+}
+
+const EXPERIENCE_TEXT_SELECTOR = '.experience-heading, .experience-caption, .experience-detail h3, .experience-meta, .experience-stage-heading, .experience-stage-description';
+
+function ExperienceChapter({ entering }) {
+  const chapterRef = useRef(null);
+  const backgroundRef = useRef(null);
+  const updateBackgroundInk = useBackgroundInk(chapterRef, `.work-trajectory h2, ${EXPERIENCE_TEXT_SELECTOR}`, '.experience-background');
   return (
-    <section ref={experienceRef} className="experience-section section" id="experience" aria-labelledby="experience-title">
-      <div className="experience-background" aria-hidden="true">
-        <Grainient colors={['#6d6eab', '#9278ad', '#c8bbd6', '#ffffff']} angle={100} flow={1.1} silk={0.6} grainAmount={0.08} bands={3} dpr={1} onLuminanceMap={updateBackgroundInk} />
+    <div ref={chapterRef} className="experience-chapter" id="experience-chapter">
+      <div ref={backgroundRef} className="experience-background" aria-hidden="true">
+        <Grainient
+          colors={['#6d6eab', '#9278ad', '#c8bbd6', '#ffffff']}
+          angle={100} flow={1.1} silk={0.6} grainAmount={0.08} bands={3} dpr={1}
+          onLuminanceMap={updateBackgroundInk}
+        />
       </div>
+      <WorkTrajectory entering={entering} backgroundRef={backgroundRef}>
+        <AdaptiveInkText>从</AdaptiveInkText>
+        <TrajectoryPhrase><AdaptiveInkText>不会到会</AdaptiveInkText></TrajectoryPhrase>
+        <AdaptiveInkText>，从</AdaptiveInkText>
+        <TrajectoryPhrase><AdaptiveInkText>会到稳</AdaptiveInkText></TrajectoryPhrase>
+        <AdaptiveInkText>，</AdaptiveInkText><br />
+        <AdaptiveInkText>就这么过来的</AdaptiveInkText>
+      </WorkTrajectory>
+      <Experience entering={entering} />
+    </div>
+  );
+}
+
+function Experience({ entering }) {
+  const sectionRef = useRef(null);
+
+  useLayoutEffect(() => {
+    if (typeof IntersectionObserver === 'undefined') return;
+
+    const texts = sectionRef.current.querySelectorAll(EXPERIENCE_TEXT_SELECTOR);
+    for (const text of texts) text.dataset.experienceText = 'waiting';
+    if (entering) return;
+
+    const observer = new IntersectionObserver(entries => {
+      for (const { target, isIntersecting, intersectionRatio } of entries) {
+        const revealThreshold = target.matches('h2, h3') ? .55 : .15;
+        if (!isIntersecting) target.dataset.experienceText = 'waiting';
+        else if (intersectionRatio >= revealThreshold) target.dataset.experienceText = 'entered';
+      }
+    }, { threshold: [0, .15, .55] });
+
+    for (const text of texts) observer.observe(text);
+
+    return () => {
+      observer.disconnect();
+      for (const text of texts) delete text.dataset.experienceText;
+    };
+  }, [entering]);
+
+  useEffect(() => {
+    const entrances = Array.from(sectionRef.current.querySelectorAll('.experience-photos'), group => ({
+      group,
+      result: group.parentElement.querySelector('.experience-stage-result'),
+    }));
+    let frame = 0;
+
+    function update() {
+      frame = 0;
+      const viewportBottom = window.innerHeight;
+      for (const { group, result } of entrances) {
+        const { top, height } = (result ?? group).getBoundingClientRect();
+        const entered = group.dataset.photoEntrance === 'entered';
+        const entranceOffset = result ? 20 : Math.min(height, viewportBottom) * .23;
+        if (entered && top >= viewportBottom + 32) {
+          group.dataset.photoEntrance = 'waiting';
+        } else if (!entered && top <= viewportBottom - entranceOffset) {
+          const gallery = group.getBoundingClientRect();
+          if (gallery.top > viewportBottom - 72 || gallery.bottom <= 0) continue;
+          group.dataset.photoEntrance = 'entered';
+        }
+      }
+    }
+
+    function schedule() {
+      if (!frame) frame = requestAnimationFrame(update);
+    }
+
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', schedule);
+    update();
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener('scroll', schedule);
+      window.removeEventListener('resize', schedule);
+    };
+  }, []);
+
+  return (
+    <section ref={sectionRef} className="experience-section section" id="experience" aria-labelledby="experience-title">
+      <h2 className="experience-heading wrap" id="experience-title"><AdaptiveInkText stagger={46}>职业轨迹</AdaptiveInkText></h2>
       <p className="chapter-caption experience-caption wrap"><AdaptiveInkText>（工作）</AdaptiveInkText></p>
-      <div className="experience-layout wrap">
-        <h2 id="experience-title"><AdaptiveInkText>职业轨迹</AdaptiveInkText><span className="accent"><AdaptiveInkText>。</AdaptiveInkText></span></h2>
-        <ol className="experience-list">
-          {profile.experience.map((item, index) => (
-            <li className="experience-item" key={index}>
-              <span className="experience-period"><AdaptiveInkText>{item.period}</AdaptiveInkText></span>
-              <div className="experience-detail">
-                <h3><AdaptiveInkText>{item.role}</AdaptiveInkText></h3>
-                <p><AdaptiveInkText>{item.company}</AdaptiveInkText></p>
-              </div>
-            </li>
-          ))}
-        </ol>
-      </div>
+      {profile.experience.map(item => (
+        <article className="experience-layout wrap" data-photo-style={item.photoStyle} key={item.company + item.period}>
+          {item.images?.length ? (
+            <div className="experience-photos" data-photo-entrance="waiting" role="group" aria-label={`${item.role}工作照片`}
+              onPointerMove={moveExperiencePhotos} onPointerLeave={resetExperiencePhotos}>
+              {item.images.map((image, imageIndex) => (
+                <figure className="experience-photo" key={imageIndex}>
+                  {image ? (
+                    <img src={image.src} alt={image.alt} loading="lazy" decoding="async" />
+                  ) : (
+                    <div className="experience-photo-placeholder"><span>照片待补充</span></div>
+                  )}
+                </figure>
+              ))}
+            </div>
+          ) : null}
+          <div className="experience-detail">
+            <h3><AdaptiveInkText stagger={46}>{item.role}</AdaptiveInkText></h3>
+            <div className="experience-meta">
+              <p><AdaptiveInkText>{item.company}</AdaptiveInkText></p>
+              <p className="experience-period"><AdaptiveInkText>{item.period}</AdaptiveInkText></p>
+            </div>
+            <ul className="experience-stages">
+              {item.stages.map(stage => (
+                <li className="experience-stage" key={stage.period ?? stage.description}>
+                  {stage.title ? (
+                    <h4 className="experience-stage-heading">
+                      <span className="experience-stage-period"><AdaptiveInkText>{stage.period}</AdaptiveInkText></span>
+                      <span><AdaptiveInkText>{stage.title}</AdaptiveInkText></span>
+                    </h4>
+                  ) : null}
+                  <p className="experience-stage-description"><AdaptiveInkText>{stage.description}</AdaptiveInkText></p>
+                  {stage.result ? <p className="experience-stage-description experience-stage-result"><AdaptiveInkText>{stage.result}</AdaptiveInkText></p> : null}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </article>
+      ))}
     </section>
   );
 }
@@ -327,7 +667,7 @@ function Projects({ onSelect, cursorEnabled }) {
         <p className="portfolio-statement-note">用心设计的作品经得起时间的考验，无论它诞生于何时，又因何而作。</p>
       </div>
       <ul className="portfolio-desktop" aria-label={`${portfolioSlots.length}个作品位置`}>
-        {portfolioSlots.map(project => <li className="portfolio-item" key={project.id}>
+        {portfolioSlots.map(project => <li className={'portfolio-item' + (project.coverSize === 'large' ? ' portfolio-item--large-cover' : '')} key={project.id}>
           <button className="portfolio-icon" data-cursor-label={'查看' + project.name} onClick={() => onSelect(project)} aria-label={'查看' + project.name + (project.image || project.images.length ? '' : '，图片待添加')}>
             <PortfolioThumbnail project={project} />
             <span className="portfolio-icon-label" aria-hidden="true">
@@ -375,7 +715,7 @@ function PortfolioPreview({ project, onClose, onBack }) {
   const isProcess = project.view === 'process';
   const viewTitle = isProcess ? '想法到落地' : '作品展示';
   const description = isProcess ? project.process?.description : project.description;
-  const images = isProcess ? project.process?.images || [] : project.images?.length ? project.images : project.image ? [project.image] : [];
+  const images = isProcess ? (project.process?.images ?? []) : (project.images ?? (project.image ? [project.image] : []));
   const documents = isProcess ? project.process?.documents || [] : [];
   return <article className="portfolio-preview">
     <header className="portfolio-window-bar" title="拖动标题栏移动窗口">
@@ -415,27 +755,170 @@ function PortfolioPreview({ project, onClose, onBack }) {
     </div>
   </article>;
 }
-function ContactMethodIcon({ type }) {
-  if (type === 'wechat') return <span className="contact-method-icon contact-wechat-icon" aria-hidden="true" />;
+function ContactEmailIcon() {
   return <svg className="contact-method-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    {type === 'phone' ? <path d="M7.5 3H4.8C3.8 3 3 3.8 3 4.8 3 13.7 10.3 21 19.2 21c1 0 1.8-.8 1.8-1.8v-2.7l-4.5-1.8-1.8 2.1a14.1 14.1 0 0 1-7.5-7.5l2.1-1.8L7.5 3Z" /> : <><rect x="3" y="5" width="18" height="14" rx="2" /><path d="m3 7 9 6 9-6" /></>}
+    <rect x="3" y="5" width="18" height="14" rx="2" />
+    <path d="m3 7 9 6 9-6" />
   </svg>;
 }
-function ContactStatement() {
+async function copyContactEmail(email) {
+  try {
+    await navigator.clipboard.writeText(email);
+    return true;
+  } catch {
+    return false;
+  }
+}
+function FooterContactAddresses() {
+  const listRef = useRef(null);
+  const hoverTimeout = useRef(0);
+  const [selectedEmail, setSelectedEmail] = useState('');
+  const [hoveredEmail, setHoveredEmail] = useState('');
+  const [copyResult, setCopyResult] = useState(null);
+
+  useEffect(() => {
+    const list = listRef.current;
+    const links = [...list.querySelectorAll('a')];
+    if (CSS.supports('top: anchor(bottom)')) {
+      for (const area of list.querySelectorAll('.contact-email-popover-area')) {
+        if (!area.showPopover) continue;
+        area.setAttribute('popover', 'manual');
+        if (!area.matches(':popover-open')) area.showPopover();
+      }
+    }
+    function updateSelection() {
+      const selection = document.getSelection();
+      const range = selection?.rangeCount && !selection.isCollapsed ? selection.getRangeAt(0) : null;
+      const matches = range ? links.filter(link => range.intersectsNode(link)) : [];
+      const email = matches.length === 1 ? matches[0].textContent : '';
+      setSelectedEmail(email);
+      setCopyResult(current => current?.email === email ? current : null);
+    }
+    document.addEventListener('selectionchange', updateSelection);
+    return () => {
+      document.removeEventListener('selectionchange', updateSelection);
+      clearTimeout(hoverTimeout.current);
+    };
+  }, []);
+
+  function showCopyHint(event, email) {
+    if (event.pointerType === 'touch') return;
+    clearTimeout(hoverTimeout.current);
+    setHoveredEmail(email);
+  }
+
+  function scheduleHideCopyHint() {
+    clearTimeout(hoverTimeout.current);
+    hoverTimeout.current = setTimeout(() => setHoveredEmail(''), 240);
+  }
+
+  async function copyEmail(email) {
+    const copied = await copyContactEmail(email);
+    setCopyResult({ email, copied });
+  }
+
+  return (
+    <>
+      <dl className="contact-addresses" ref={listRef}>
+        {profile.emails.map((email, index) => (
+          <div key={email}>
+            <dt><ContactEmailIcon /><span className="about-accessible-title">邮箱</span></dt>
+            <dd className="contact-email-item" data-selected={selectedEmail === email} data-hovered={hoveredEmail === email}
+              style={{ anchorName: `--footer-email-${index}` }}
+              onPointerEnter={event => showCopyHint(event, email)} onPointerLeave={scheduleHideCopyHint}>
+              <a href={`mailto:${email}`} draggable={false} onClick={event => {
+                const selection = document.getSelection();
+                if (selection && !selection.isCollapsed && selection.containsNode(event.currentTarget, true)) event.preventDefault();
+              }}>{email}</a>
+              <span className="contact-email-popover-area" style={{ positionAnchor: `--footer-email-${index}` }}
+                onPointerEnter={event => showCopyHint(event, email)} onPointerLeave={scheduleHideCopyHint}>
+                <button className="contact-email-popover" type="button" aria-label={`复制邮箱 ${email}`}
+                  onPointerDown={event => event.preventDefault()} onClick={() => copyEmail(email)}>
+                  {copyResult?.email === email && copyResult.copied ? '已复制 ✓' : '复制邮箱'}
+                </button>
+              </span>
+            </dd>
+          </div>
+        ))}
+      </dl>
+      <span className="about-accessible-title" role="status">
+        {copyResult && (copyResult.copied ? `已复制 ${copyResult.email}` : '复制失败，请手动复制邮箱。')}
+      </span>
+    </>
+  );
+}
+const CONTACT_STATEMENT_LINES = ['优秀的设计不仅仅', '在于你创造了什么，', '更在于你和谁一起', '创造了它。'];
+
+function ContactStatement({ entering, revealRef }) {
+  const effectRef = useRef(null);
   const textRef = useRef(null);
-  return <div className="contact-statement-effect">
-    <h2 ref={textRef} className="contact-statement" id="contact-title">
-      <span>优秀的设计不仅仅</span>
-      <span>在于你创造了什么，</span>
-      <span>更在于你和谁一起</span>
-      <span>创造了它。</span>
+
+  useLayoutEffect(() => {
+    const effect = effectRef.current;
+    effect.dataset.statementReveal = 'waiting';
+    if (entering) return;
+
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+    let frame = 0;
+
+    function update() {
+      frame = 0;
+      if (reduced.matches) {
+        effect.dataset.statementReveal = 'settled';
+        return;
+      }
+      // The previous section covers the translated footer until the boundary scrolls past it.
+      const exposedTop = Math.max(0, revealRef.current.getBoundingClientRect().top);
+      const state = effect.dataset.statementReveal;
+      if (exposedTop >= innerHeight && state === 'waiting') return;
+      const { top, bottom, height } = textRef.current.getBoundingClientRect();
+      const visibleHeight = Math.min(bottom, innerHeight) - Math.max(top, exposedTop);
+      if (visibleHeight <= 0 && state !== 'waiting') effect.dataset.statementReveal = 'waiting';
+      else if (state === 'waiting' &&
+        visibleHeight >= Math.min(height * .55, innerHeight * .4)) {
+        effect.dataset.statementReveal = 'playing';
+      }
+    }
+
+    function schedule() {
+      if (!frame) frame = requestAnimationFrame(update);
+    }
+
+    schedule();
+    window.addEventListener('scroll', schedule, { passive: true });
+    window.addEventListener('resize', schedule);
+    reduced.addEventListener('change', schedule);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener('scroll', schedule);
+      window.removeEventListener('resize', schedule);
+      reduced.removeEventListener('change', schedule);
+      delete effect.dataset.statementReveal;
+    };
+  }, [entering, revealRef]);
+
+  function finishReveal(event) {
+    if (event.animationName === 'heading-reveal' &&
+      event.target.parentElement === event.currentTarget.lastElementChild &&
+      effectRef.current.dataset.statementReveal === 'playing') {
+      effectRef.current.dataset.statementReveal = 'settled';
+    }
+  }
+
+  return <div ref={effectRef} className="contact-statement-effect">
+    <h2 ref={textRef} className="contact-statement" id="contact-title" onAnimationEnd={finishReveal}>
+      {CONTACT_STATEMENT_LINES.map((line, index) => (
+        <span key={line} style={{ '--contact-line-delay': `${index * 95}ms` }}>
+          <AdaptiveInkText stagger={46}>{line}</AdaptiveInkText>
+        </span>
+      ))}
     </h2>
     <div className="contact-glass-layer" aria-hidden="true">
       <FluidGlass text="" textSource={textRef} shape="diamond" shapes={['diamond']} morphOnClick={false} color="#ffffff" tint={0.55} frost={0.65} size={260} refraction={1} dispersion={0.1} interaction="follow" constrainToBounds background="#9278ad" maxDevicePixelRatio={1.5} />
     </div>
   </div>;
 }
-function Contact({ onContact, onInformation }) {
+function Contact({ onContact, onInformation, entering }) {
   const revealRef = useRef(null);
   useContactReveal(revealRef);
   return (
@@ -458,21 +941,37 @@ function Contact({ onContact, onInformation }) {
         <div className="contact-body">
           <div className="contact-invitation">
             <button className="contact-conversation" onClick={onContact}>让我们开始对话吧。<Arrow diagonal /></button>
-            <ContactStatement />
+            <ContactStatement entering={entering} revealRef={revealRef} />
           </div>
           <div className="contact-columns">
-          <div className="contact-column contact-methods">
-            <h3>联系方式</h3>
-            <dl className="contact-addresses">
-              <div><dt><ContactMethodIcon type="phone" /><span className="about-accessible-title">电话</span></dt><dd><a href={'tel:' + profile.phone}>{profile.phone}</a></dd></div>
-              <div><dt><ContactMethodIcon type="email" /><span className="about-accessible-title">邮箱</span></dt><dd><a href={'mailto:' + profile.email}>{profile.email}</a></dd></div>
-              <div><dt><ContactMethodIcon type="wechat" /><span className="about-accessible-title">微信</span></dt><dd>{profile.wechat}</dd></div>
-            </dl>
-          </div>
-          <div className="contact-column contact-return">
-            <h3>保持探索</h3>
-            <a className="contact-back-top" href="#home" aria-label="回到顶部"><span aria-hidden="true">↑</span></a>
-          </div>
+            <div className="contact-column contact-methods">
+              <h3>联系方式</h3>
+              <FooterContactAddresses />
+              <div className="contact-availability" lang="en">
+                <p>
+                  Based in China{' '}
+                  <svg className="contact-country-flag" viewBox="0 0 30 20" aria-hidden="true">
+                    <defs>
+                      <path id="contact-flag-star" d="M0 -1 .2245 -.309 .9511 -.309 .3633 .118 .5878 .809 0 .382 -.5878 .809 -.3633 .118 -.9511 -.309 -.2245 -.309Z" />
+                    </defs>
+                    <path fill="#de2910" d="M0 0h30v20H0z" />
+                    <g fill="#ffde00">
+                      <use href="#contact-flag-star" transform="translate(5 5) scale(3)" />
+                      <use href="#contact-flag-star" transform="translate(10 2) rotate(-121)" />
+                      <use href="#contact-flag-star" transform="translate(12 4) rotate(-98)" />
+                      <use href="#contact-flag-star" transform="translate(12 7) rotate(-74)" />
+                      <use href="#contact-flag-star" transform="translate(10 9) rotate(-51)" />
+                    </g>
+                  </svg>{' '}
+                  (GMT+8)
+                </p>
+                <p>Replies within 24–48h</p>
+              </div>
+              <a className="contact-return" href="#home" aria-label="保持探索，回到顶部">
+                <span>保持探索</span>
+                <span className="contact-back-top" aria-hidden="true">↑</span>
+              </a>
+            </div>
           </div>
         </div>
         <a className="contact-large-wordmark" href="#home" aria-label="ZhaoFeiYu，回到首页">
@@ -509,24 +1008,66 @@ function SiteInformation({ type, onClose }) {
     <p className="site-policy-reference">参考法律：<a href={policy.reference.url} target="_blank" rel="noopener noreferrer">{policy.reference.label} ↗</a></p>
   </article>;
 }
+function ContactDialog() {
+  const [copiedEmail, setCopiedEmail] = useState('');
+
+  async function copyEmail(email) {
+    setCopiedEmail(await copyContactEmail(email) ? email : '');
+  }
+
+  return (
+    <div className="contact-dialog">
+      <SectionLabel number="↗">开始一次对话</SectionLabel>
+      <h2 id="dialog-title">好想法，<br />从联系开始。</h2>
+      <p>欢迎通过邮件联系我。</p>
+      {profile.emails.map(email => (
+        <div className="contact-row" key={email}>
+          <strong><a href={`mailto:${email}`}>{email}</a></strong>
+          <button className="contact-copy" type="button" onClick={() => copyEmail(email)} aria-label={`复制邮箱 ${email}`}>
+            {copiedEmail === email ? '已复制 ✓' : '复制邮箱'}
+          </button>
+        </div>
+      ))}
+      <span className="copy-status" aria-live="polite">{copiedEmail ? `已复制 ${copiedEmail}` : ''}</span>
+    </div>
+  );
+}
+
 function DetailDialog({ selection, onClose, onNavigate }) {
   const ref = useRef(null);
-  const [copied, setCopied] = useState(false);
   useEffect(() => {
-    if (selection) { ref.current.showModal(); ref.current.scrollTop = 0; ref.current.querySelector('.portfolio-folder-close, .portfolio-window-dismiss')?.focus({ preventScroll: true }); setCopied(false); document.body.style.overflow = 'hidden'; } else { ref.current.close(); document.body.style.overflow = ''; }
+    if (selection) { ref.current.showModal(); ref.current.scrollTop = 0; ref.current.querySelector('.portfolio-folder-close, .portfolio-window-dismiss')?.focus({ preventScroll: true }); document.body.style.overflow = 'hidden'; } else { ref.current.close(); document.body.style.overflow = ''; }
     return () => { document.body.style.overflow = ''; };
   }, [selection]);
   useDraggableDialog(ref, selection);
-  async function copyEmail() { try { await navigator.clipboard.writeText(profile.email); setCopied(true); } catch { setCopied(false); } }
-  return <dialog ref={ref} className={selection === 'campus' ? "detail-dialog campus-detail-dialog" : selection === 'profile' ? "detail-dialog profile-detail-dialog" : selection?.folderStage ? "detail-dialog portfolio-folder-dialog" : selection?.isPortfolioSlot ? "detail-dialog portfolio-window" : "detail-dialog"} onCancel={onClose} onClick={e => { if (e.target === ref.current) onClose(); }} aria-labelledby="dialog-title"><div className="dialog-inner"><button className="dialog-close" onClick={onClose} aria-label="关闭弹窗">✕</button>{selection === 'profile' ? <Suspense fallback={<p className="profile-loading">正在打开个人卡片…</p>}><ProfileCardView /></Suspense> : selection === 'campus' ? <CampusView /> : selection === 'contact' ? <div className="contact-dialog"><SectionLabel number="↗">开始一次对话</SectionLabel><h2 id="dialog-title">好想法，<br />从联系开始。</h2><p>{profile.email ? '欢迎通过以下方式联系我。' : '联系方式待补充。收到你的简历后，这里将展示真实邮箱和微信。'}</p><div className="contact-row"><span>PHONE</span><strong><a href={'tel:' + profile.phone}>{profile.phone}</a></strong></div><div className="contact-row"><span>EMAIL</span><strong>{profile.email || '待补充'}</strong></div><div className="contact-row"><span>WECHAT</span><strong>{profile.wechat || '待补充'}</strong></div>{profile.email && <div className="contact-actions"><a className="primary-button" href={'mailto:' + profile.email}>发送邮件 <Arrow diagonal /></a><button onClick={copyEmail}>{copied ? '已复制 ✓' : '复制邮箱'}</button></div>}<span className="copy-status" aria-live="polite">{copied ? '邮箱已复制到剪贴板' : ''}</span></div> : typeof selection === 'string' ? <SiteInformation type={selection} onClose={onClose} /> : selection?.folderStage ? <PortfolioFolderPicker project={selection} onClose={onClose} onChoose={view => onNavigate({ ...selection, folderStage: false, view })} /> : selection?.isPortfolioSlot ? <PortfolioPreview key={selection.id + (selection.view || "")} project={selection} onClose={onClose} onBack={() => onNavigate({ ...selection, folderStage: true })} /> : selection ? <><ProjectArt type={selection.type} /><div className="project-description"><span className="subtle">{selection.en} / 概念项目</span><h2 id="dialog-title">{selection.name}</h2><h3>{selection.subtitle}</h3><p>{selection.description}</p><div className="scope">{selection.scope}</div><button className="text-button" onClick={onClose}>返回作品列表 <Arrow /></button></div></> : null}</div></dialog>;
+  return <dialog ref={ref} className={selection === 'campus' ? "detail-dialog campus-detail-dialog" : selection === 'profile' ? "detail-dialog profile-detail-dialog" : selection?.folderStage ? "detail-dialog portfolio-folder-dialog" : selection?.isPortfolioSlot ? "detail-dialog portfolio-window" : "detail-dialog"} onCancel={onClose} onClick={e => { if (e.target === ref.current) onClose(); }} aria-labelledby="dialog-title"><div className="dialog-inner"><button className="dialog-close" onClick={onClose} aria-label="关闭弹窗">✕</button>{selection === 'profile' ? <Suspense fallback={<p className="profile-loading">正在打开个人卡片…</p>}><ProfileCardView /></Suspense> : selection === 'campus' ? <CampusView /> : selection === 'contact' ? <ContactDialog /> : typeof selection === 'string' ? <SiteInformation type={selection} onClose={onClose} /> : selection?.folderStage ? <PortfolioFolderPicker project={selection} onClose={onClose} onChoose={view => onNavigate({ ...selection, folderStage: false, view })} /> : selection?.isPortfolioSlot ? <PortfolioPreview key={selection.id + (selection.view || "")} project={selection} onClose={onClose} onBack={() => onNavigate({ ...selection, folderStage: true })} /> : selection ? <><ProjectArt type={selection.type} /><div className="project-description"><span className="subtle">{selection.en} / 概念项目</span><h2 id="dialog-title">{selection.name}</h2><h3>{selection.subtitle}</h3><p>{selection.description}</p><div className="scope">{selection.scope}</div><button className="text-button" onClick={onClose}>返回作品列表 <Arrow /></button></div></> : null}</div></dialog>;
 }
 function App() {
   const [selection, setSelection] = useState(null);
+  const [entranceStage, setEntranceStage] = useState(() => (
+    matchMedia('(prefers-reduced-motion: reduce)').matches ? null : 'loading'
+  ));
+  const entering = Boolean(entranceStage);
   useLayoutEffect(() => {
     document.getElementById(location.hash.slice(1))?.scrollIntoView({ behavior: 'instant' });
   }, []);
   const contact = () => setSelection('contact');
-  return <><a className="skip-link" href="#about">跳转至内容</a><Header /><main><Hero /><About onOpenProfile={() => setSelection('profile')} onOpenCampus={() => setSelection('campus')} /><Experience /><Projects onSelect={project => setSelection({ ...project, folderStage: true })} cursorEnabled={!selection} /></main><Contact onContact={contact} onInformation={setSelection} /><DetailDialog selection={selection} onClose={() => setSelection(null)} onNavigate={setSelection} /></>;
+  return (
+    <>
+      <a className="skip-link" href="#about" inert={entering}>跳转至内容</a>
+      <Header entranceStage={entranceStage} onEntranceStageChange={setEntranceStage} />
+      <div inert={entering}>
+        <main>
+          <Hero entering={entering} />
+          <About entering={entering} onOpenProfile={() => setSelection('profile')} onOpenCampus={() => setSelection('campus')} />
+          <ExperienceChapter entering={entering} />
+          <Projects onSelect={project => setSelection({ ...project, folderStage: true })} cursorEnabled={!selection && !entering} />
+        </main>
+        <Contact entering={entering} onContact={contact} onInformation={setSelection} />
+        <DetailDialog selection={selection} onClose={() => setSelection(null)} onNavigate={setSelection} />
+      </div>
+    </>
+  );
 }
 
 createRoot(document.getElementById('root')).render(<App />);

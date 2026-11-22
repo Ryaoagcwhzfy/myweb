@@ -1,6 +1,7 @@
 
 
 import React, { useEffect, useRef } from 'react';
+import createContrastSampler from './createContrastSampler';
 import './GradientASCII.css';
 
 const MAX_COLORS = 8;
@@ -551,9 +552,9 @@ const GradientASCII = ({
     const fieldTarget = createTarget(gl, 2);
     const haloA = createTarget(gl, 1);
     const haloB = createTarget(gl, 1);
+    const contrast = createContrastSampler(gl);
     const contrastTarget = createTarget(gl, 1);
-    sizeTarget(gl, contrastTarget, 256, 128);
-    const contrastPixels = new Uint8Array(256 * 128 * 4);
+    sizeTarget(gl, contrastTarget, contrast.width, contrast.height);
     let lastContrastSample = -Infinity;
 
     const probe = document.createElement('canvas').getContext('2d', { willReadFrequently: true });
@@ -610,7 +611,7 @@ const GradientASCII = ({
           if (disposed || atlasKey !== key) return;
           if (atlas) gl.deleteTexture(atlas.texture);
           atlas = buildAtlas(gl, s.characterSets, s.fontFamily);
-          draw();
+          wake();
         },
         () => {}
       );
@@ -660,6 +661,8 @@ const GradientASCII = ({
     const draw = () => {
       const s = settingsRef.current;
       const reveal = s.revealRef?.current;
+      const sample = contrast.poll();
+      if (sample && reveal?.visible !== false) luminanceCallbackRef.current?.(sample);
       const elapsed = reveal?.startedAt == null ? Infinity : performance.now() - reveal.startedAt;
       glyphReveal = !reveal || reduce ? 1 : reveal.visible ? clamp(elapsed / 1000, 0, 1) : 0;
       colorReveal = !reveal || reduce ? 1 : reveal.visible ? clamp((elapsed - 1000) / 1000, 0, 1) : 0;
@@ -667,6 +670,7 @@ const GradientASCII = ({
         const stage = glyphReveal === 0 ? 'waiting' : glyphReveal < 1 ? 'glyphs' : colorReveal < 1 ? 'color' : 'complete';
         if (container.dataset.revealStage !== stage) container.dataset.revealStage = stage;
       }
+      if (reveal?.visible === false && !reduce) return;
       const aspect = view.width / view.height;
       syncAtlas();
       syncPalette();
@@ -696,16 +700,15 @@ const GradientASCII = ({
       gl.drawArrays(gl.TRIANGLES, 0, 3);
 
       // Read a small color map, excluding glyph flicker, for foreground contrast.
-      if (luminanceCallbackRef.current && performance.now() - lastContrastSample > 150) {
+      if (luminanceCallbackRef.current && !contrast.pending && performance.now() - lastContrastSample > 150) {
         lastContrastSample = performance.now();
         gl.bindFramebuffer(gl.READ_FRAMEBUFFER, fieldTarget.framebuffer);
         gl.readBuffer(gl.COLOR_ATTACHMENT0);
         gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, contrastTarget.framebuffer);
         gl.drawBuffers([gl.COLOR_ATTACHMENT0]);
-        gl.blitFramebuffer(0, 0, fieldTarget.width, fieldTarget.height, 0, 0, 256, 128, gl.COLOR_BUFFER_BIT, gl.LINEAR);
+        gl.blitFramebuffer(0, 0, fieldTarget.width, fieldTarget.height, 0, 0, contrast.width, contrast.height, gl.COLOR_BUFFER_BIT, gl.LINEAR);
         gl.bindFramebuffer(gl.READ_FRAMEBUFFER, contrastTarget.framebuffer);
-        gl.readPixels(0, 0, 256, 128, gl.RGBA, gl.UNSIGNED_BYTE, contrastPixels);
-        luminanceCallbackRef.current({ pixels: contrastPixels, width: 256, height: 128, opacity: s.gradientOpacity * colorReveal });
+        contrast.queue(s.gradientOpacity * colorReveal);
       }
 
       const glowing = s.glow > 0.001;
@@ -815,7 +818,7 @@ const GradientASCII = ({
       }
       updateInput(dt);
       draw();
-      const busy = !reduce || introClock < 1 || clicks.length > 0 || trail.length > 0;
+      const busy = !reduce || introClock < 1 || clicks.length > 0 || trail.length > 0 || contrast.pending;
       if (busy) raf = requestAnimationFrame(frame);
       else last = 0;
     };
@@ -892,6 +895,7 @@ const GradientASCII = ({
       window.removeEventListener('pointermove', onPointerMove);
       window.removeEventListener('pointerdown', onPointerDown);
       document.removeEventListener('visibilitychange', onVisibility);
+      contrast.dispose();
       [fieldTarget, haloA, haloB, contrastTarget].forEach(target => {
         target.textures.forEach(texture => gl.deleteTexture(texture));
         gl.deleteFramebuffer(target.framebuffer);

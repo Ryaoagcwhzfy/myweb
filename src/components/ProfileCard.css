@@ -295,6 +295,12 @@
   background: var(--pc-status);
 }
 
+.profile-card__contacts {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
 .profile-card__contact {
   display: flex;
   align-items: center;

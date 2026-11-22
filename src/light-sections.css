@@ -2,8 +2,17 @@
 :root { --violet: #9278ad; }
 body { background: #fff; }
 
+@keyframes heading-reveal {
+  from { translate: 0 1.32em; scale: .9; }
+  72% { translate: 0 -.035em; scale: 1; }
+  to { translate: 0 0; scale: 1; }
+}
+
+@keyframes heading-character-reveal { from { opacity: 0; } to { opacity: 1; } }
+
 .about,
 main > .section,
+.experience-chapter,
 .detail-dialog {
   --bg: #fff;
   --muted: var(--violet);
@@ -20,8 +29,6 @@ main > .section,
 .experience-detail p,
 .project-index,
 .project-category { color: var(--violet); }
-
-.experience-item::before { background: var(--violet); }
 
 .filters button { color: var(--violet); }
 .filters button:hover,

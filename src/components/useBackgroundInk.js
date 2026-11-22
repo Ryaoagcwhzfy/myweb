@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef } from 'react';
 // Match foreground elements to the animated canvas at their actual positions.
 export default function useBackgroundInk(sectionRef, labelSelector = '.portfolio-icon-label, .portfolio-caption', backgroundSelector = null, overlaySelector = null) {
   const mapRef = useRef(null);
+  const frameRef = useRef(0);
   const apply = useCallback(() => {
     const section = sectionRef.current;
     const map = mapRef.current;
@@ -13,11 +14,13 @@ export default function useBackgroundInk(sectionRef, labelSelector = '.portfolio
     const labels = section.querySelectorAll(labelSelector);
     const headerLabels = document.querySelectorAll('.header .logo, .header .nav > a, .header .menu-toggle');
     const overlay = overlaySelector ? document.querySelectorAll(overlaySelector) : [];
+    const changes = [];
     const characters = [...labels, ...headerLabels, ...overlay].flatMap(label => {
+      const rect = label.getBoundingClientRect();
+      if (rect.bottom < -32 || rect.top > innerHeight + 32) return [];
       const glyphs = label.querySelectorAll('[data-ink-character]');
       if (!glyphs.length) return [label];
-      label.removeAttribute('data-project-ink');
-      label.removeAttribute('data-ink-surface');
+      if (label.dataset.projectInk) changes.push({ element: label, ink: null });
       return [...glyphs];
     });
     for (const element of characters) {
@@ -25,13 +28,12 @@ export default function useBackgroundInk(sectionRef, labelSelector = '.portfolio
       const centerY = rect.top + rect.height / 2;
       const isHeader = element.closest('.header');
       if (!isHeader && (centerY < bounds.top || centerY >= bounds.bottom)) {
-        element.dataset.projectInk = 'violet';
+        if (element.dataset.projectInk !== 'violet') changes.push({ element, ink: 'violet' });
         continue;
       }
       if (isHeader && (centerY < bounds.top || centerY >= bounds.bottom)) {
         if (element.dataset.inkSurface === section.id) {
-          element.removeAttribute('data-project-ink');
-          element.removeAttribute('data-ink-surface');
+          changes.push({ element, ink: null });
         }
         continue;
       }
@@ -46,20 +48,36 @@ export default function useBackgroundInk(sectionRef, labelSelector = '.portfolio
       }
       const threshold = element.dataset.projectInk === 'white' ? 0.91 : 0.89;
       const ink = luminance < threshold ? 'white' : 'violet';
-      if (element.dataset.projectInk !== ink) element.dataset.projectInk = ink;
-      if (isHeader) element.dataset.inkSurface = section.id;
+      const surface = isHeader ? section.id : undefined;
+      if (element.dataset.projectInk !== ink || (surface && element.dataset.inkSurface !== surface)) {
+        changes.push({ element, ink, surface });
+      }
+    }
+    for (const { element, ink, surface } of changes) {
+      if (ink === null) {
+        element.removeAttribute('data-project-ink');
+        element.removeAttribute('data-ink-surface');
+      } else {
+        if (element.dataset.projectInk !== ink) element.dataset.projectInk = ink;
+        if (surface && element.dataset.inkSurface !== surface) element.dataset.inkSurface = surface;
+      }
     }
   }, [sectionRef, labelSelector, backgroundSelector, overlaySelector]);
 
+  const schedule = useCallback(() => {
+    if (frameRef.current) return;
+    frameRef.current = requestAnimationFrame(() => {
+      frameRef.current = 0;
+      apply();
+    });
+  }, [apply]);
+
   useEffect(() => {
-    let frame = 0;
-    const schedule = () => {
-      if (!frame) frame = requestAnimationFrame(() => { frame = 0; apply(); });
-    };
     window.addEventListener('scroll', schedule, { passive: true });
     window.addEventListener('resize', schedule);
     return () => {
-      cancelAnimationFrame(frame);
+      cancelAnimationFrame(frameRef.current);
+      frameRef.current = 0;
       window.removeEventListener('scroll', schedule);
       window.removeEventListener('resize', schedule);
       document.querySelectorAll('.header [data-ink-surface]').forEach(element => {
@@ -69,7 +87,7 @@ export default function useBackgroundInk(sectionRef, labelSelector = '.portfolio
         }
       });
     };
-  }, [apply]);
+  }, [schedule, sectionRef]);
 
-  return useCallback(map => { mapRef.current = map; apply(); }, [apply]);
+  return useCallback(map => { mapRef.current = map; schedule(); }, [schedule]);
 }

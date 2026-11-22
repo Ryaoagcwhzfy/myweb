@@ -1,4 +1,7 @@
-import { defineConfig } from 'vite';
+import { fileURLToPath } from 'node:url';
+import { defineConfig, normalizePath } from 'vite';
+
+const deliveryDirectory = normalizePath(fileURLToPath(new URL('./交付文件', import.meta.url)));
 
 export default defineConfig({
   server: {
@@ -6,7 +9,7 @@ export default defineConfig({
       // Polling avoids Windows EBUSY errors when image files are temporarily locked.
       usePolling: true,
       interval: 500,
-      ignored: ['**/.tools/**', '**/.snapshots/**', '**/交付文件/**'],
+      ignored: ['**/.tools/**', '**/.snapshots/**', `${deliveryDirectory}/**`],
     },
   },
 });

@@ -1,0 +1,251 @@
+.work-trajectory {
+  --trajectory-lead: clamp(100px, 20svh, 220px);
+  --trajectory-tail: 112svh;
+  --trajectory-frame-height: max(480px, 100dvh);
+  --trajectory-hold: clamp(42px, 6svh, 88px);
+  position: relative;
+  z-index: 4;
+  min-height: calc(var(--trajectory-frame-height) + var(--trajectory-hold));
+  scroll-margin-top: -110px;
+  isolation: isolate;
+  color: var(--violet);
+}
+
+.work-trajectory-scene {
+  position: sticky;
+  top: 0;
+  display: grid;
+  place-items: center;
+  min-height: var(--trajectory-frame-height);
+}
+
+.work-trajectory h2 {
+  z-index: 1;
+  font-size: clamp(30px, 3.7vw, 66px);
+  line-height: 1.26;
+  font-weight: 700;
+  letter-spacing: -.04em;
+  text-align: center;
+  opacity: var(--trajectory-heading-opacity, 1);
+}
+
+.work-trajectory h2 [data-project-ink="white"] { color: #fff; }
+.work-trajectory h2 [data-project-ink="violet"] { color: var(--violet); }
+
+.work-trajectory-phrase {
+  --trajectory-arrow-start: .85em;
+  --trajectory-arrow-delay: .1s;
+  position: relative;
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.work-trajectory-phrase ~ .work-trajectory-phrase {
+  --trajectory-arrow-start: .43em;
+  --trajectory-arrow-delay: .65s;
+}
+
+.work-trajectory-arrow {
+  position: absolute;
+  inset-inline-start: var(--trajectory-arrow-start);
+  inset-block-end: calc(100% + .025em);
+  inline-size: calc(100% - var(--trajectory-arrow-start) - .42em);
+  block-size: .53em;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.work-trajectory[data-trajectory-arrows] .work-trajectory-arrow { visibility: visible; }
+
+@media (prefers-reduced-motion: no-preference) {
+  .work-trajectory-arrow path { stroke-dasharray: 1; stroke-dashoffset: 1; }
+
+  .work-trajectory[data-trajectory-arrows] .work-trajectory-arrow-curve {
+    animation: work-trajectory-draw-arrow .5s ease-out var(--trajectory-arrow-delay) both;
+  }
+
+  .work-trajectory[data-trajectory-arrows] .work-trajectory-arrow-tip {
+    animation: work-trajectory-draw-arrow .2s ease-out calc(var(--trajectory-arrow-delay) + .43s) both;
+  }
+
+  @keyframes work-trajectory-draw-arrow { to { stroke-dashoffset: 0; } }
+}
+
+.work-trajectory-images {
+  position: absolute;
+  z-index: var(--trajectory-image-layer, 0);
+  inset: calc(-1 * var(--trajectory-lead)) 0 calc(-1 * var(--trajectory-tail));
+  overflow: clip;
+  opacity: clamp(0, calc((1 - var(--trajectory-progress, 0)) * 6), 1);
+  pointer-events: none;
+}
+
+.work-trajectory-image-plane {
+  position: absolute;
+  inset: var(--trajectory-lead) 0 var(--trajectory-tail);
+}
+
+.work-trajectory-image {
+  --image-progress: var(--trajectory-upper-progress, 0);
+  --carry-scale: calc(.62 * 1.3);
+  --turn-scale: .45;
+  position: absolute;
+  top: var(--y);
+  left: var(--x);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--width);
+  height: var(--height);
+  transform:
+    translate(-50%, -50%)
+    translate(
+      calc(var(--push-x) * var(--image-progress)),
+      calc(var(--trajectory-scroll-offset, 0px) * var(--carry-scale) + var(--push-y) * var(--image-progress))
+    )
+    rotate(calc(var(--angle) + var(--angle) * var(--image-progress) * var(--turn-scale)));
+}
+
+.work-trajectory-image:nth-child(n + 5) {
+  --image-progress: var(--trajectory-lower-progress, 0);
+  --carry-scale: calc(.62 * 1.65);
+}
+
+.work-trajectory-image img {
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 7px 11px #21152b18);
+}
+
+.work-trajectory-image:nth-child(1) {
+  --x: 11.5%; --y: 24%; --width: 34%; --height: 38%; --angle: -10deg;
+  --push-x: -44vw; --push-y: -39svh;
+  z-index: 2;
+}
+
+.work-trajectory-image:nth-child(1) img {
+  padding: clamp(7px, .75vw, 15px);
+  padding-block-end: clamp(9px, .92vw, 18px);
+  background: #fff;
+}
+
+.work-trajectory-image:nth-child(2) {
+  --x: 40.5%; --y: 13%; --width: 35%; --height: 43%; --angle: 1.5deg;
+  --push-x: -14vw; --push-y: -83svh;
+}
+
+.work-trajectory-image:nth-child(3) {
+  --x: 72%; --y: 18%; --width: 22%; --height: 36.5%; --angle: -5deg;
+  --push-x: 13vw; --push-y: -85svh;
+  z-index: 2;
+}
+
+.work-trajectory-image:nth-child(4) {
+  --x: 91%; --y: 29%; --width: 27%; --height: 44%; --angle: 14deg;
+  --push-x: 44vw; --push-y: -38svh;
+}
+
+.work-trajectory-image:nth-child(5) {
+  --x: 15%; --y: 86%; --width: 32%; --height: 53%; --angle: 5deg;
+  --push-x: -56vw; --push-y: 38svh;
+}
+
+.work-trajectory-image:nth-child(6) {
+  --x: 35%; --y: 88.5%; --width: 32%; --height: 31%; --angle: -8deg;
+  --push-x: -23vw; --push-y: 68svh;
+  z-index: 1;
+}
+
+.work-trajectory-image:nth-child(6) img {
+  clip-path: inset(5.8% 3.5% 1.25% 3%);
+}
+
+.work-trajectory-image:nth-child(7) {
+  --x: 77%; --y: 80%; --width: 16%; --height: 16%; --angle: 13deg;
+  --push-x: 66vw; --push-y: 0px;
+  /* Match the scene's upward motion so the film stays level as it exits. */
+  --carry-scale: 1;
+  --turn-scale: 0;
+  z-index: 1;
+}
+
+.work-trajectory-image:nth-child(8) {
+  --x: 84%; --y: 80%; --width: 48%; --height: 48%; --angle: -7deg;
+  --push-x: 43vw; --push-y: 35svh;
+  z-index: -1;
+}
+
+.work-trajectory-image:nth-child(8) img {
+  max-width: min(100%, 75svh);
+  transform: rotate(90deg);
+}
+
+.work-trajectory-image:nth-child(9) {
+  --x: calc(68% - clamp(12px, 2.5svh, 30px)); --y: 77%; --width: 30%; --height: 46%; --angle: 10deg;
+  --push-x: 0px; --push-y: 75svh;
+  z-index: 0;
+}
+
+@media (min-width: 701px) {
+  .work-trajectory-image:is(:nth-child(1), :nth-child(2), :nth-child(4)) img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .work-trajectory-image:nth-child(2) img { object-position: center 53%; }
+}
+
+@media (max-width: 700px) {
+  .work-trajectory {
+    --trajectory-lead: 15svh;
+    scroll-margin-top: -96px;
+  }
+  .work-trajectory h2 { font-size: clamp(20px, 7vw, 42px); }
+
+  .work-trajectory-image:nth-child(1) {
+    --x: 21%; --y: 13%; --width: 55%; --height: 22%;
+    --push-x: -57vw; --push-y: -52svh;
+  }
+  .work-trajectory-image:nth-child(2) {
+    --x: 66%; --y: 10%; --width: 51%; --height: 24%;
+    --push-x: 52vw; --push-y: -61svh;
+  }
+  .work-trajectory-image:nth-child(3) {
+    --x: 29%; --y: 30%; --width: 30.6%; --height: 19.55%;
+    --push-x: -60vw; --push-y: -59svh;
+  }
+  .work-trajectory-image:nth-child(4) {
+    --x: 74%; --y: 30%; --width: 42%; --height: 24%;
+    --push-x: 49vw; --push-y: -56svh;
+  }
+  .work-trajectory-image:nth-child(5) {
+    --x: 22%; --y: 72%; --width: 47%; --height: 30%;
+    --push-x: -91vw; --push-y: 45svh;
+  }
+  .work-trajectory-image:nth-child(6) {
+    --x: 71%; --y: 69.5%; --width: 54%; --height: 22%;
+    --push-x: 57vw; --push-y: 49svh;
+  }
+  .work-trajectory-image:nth-child(7) {
+    --x: 62%; --y: 82.5%; --width: 33.6%; --height: 12.8%;
+    --push-x: 60vw;
+  }
+  .work-trajectory-image:nth-child(8) {
+    --x: 72.5%; --y: 78%; --width: 76.5%; --height: 26%;
+    --push-x: 58vw; --push-y: 67svh;
+  }
+
+  .work-trajectory-image:nth-child(8) img { max-width: min(100%, 42svh); }
+
+  .work-trajectory-image:nth-child(9) {
+    --x: calc(27% - 8px); --y: 82.5%; --width: 50%; --height: 36%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .work-trajectory { --trajectory-tail: 0px; --trajectory-hold: 0px; }
+}

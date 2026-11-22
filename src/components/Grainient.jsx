@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import createContrastSampler from './createContrastSampler';
 import './Grainient.css';
 
 const MAX_COLORS = 8;
@@ -334,16 +335,16 @@ const Grainient = ({
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     const buffer = gl.createFramebuffer();
     const fieldSize = { width: 0, height: 0 };
+    const contrast = createContrastSampler(gl);
     const contrastTexture = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, contrastTexture);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, 256, 128, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, contrast.width, contrast.height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
     const contrastBuffer = gl.createFramebuffer();
     gl.bindFramebuffer(gl.FRAMEBUFFER, contrastBuffer);
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, contrastTexture, 0);
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-    const contrastPixels = new Uint8Array(256 * 128 * 4);
     let lastContrastSample = -Infinity;
 
     const probe = document.createElement('canvas').getContext('2d', { willReadFrequently: true });
@@ -403,6 +404,8 @@ const Grainient = ({
 
     const draw = () => {
       const s = settingsRef.current;
+      const sample = contrast.poll();
+      if (sample) luminanceCallbackRef.current?.(sample);
       const aspect = view.width / view.height;
       syncPalette();
       gl.bindVertexArray(vao);
@@ -433,15 +436,14 @@ const Grainient = ({
       gl.uniform1f(fu.uReveal, introClock);
       gl.drawArrays(gl.TRIANGLES, 0, 3);
       // Sample the smooth field so foreground colors follow the moving light bands.
-      if (luminanceCallbackRef.current && performance.now() - lastContrastSample > 150) {
+      if (luminanceCallbackRef.current && !contrast.pending && performance.now() - lastContrastSample > 150) {
         lastContrastSample = performance.now();
         gl.bindFramebuffer(gl.READ_FRAMEBUFFER, buffer);
         gl.readBuffer(gl.COLOR_ATTACHMENT0);
         gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, contrastBuffer);
-        gl.blitFramebuffer(0, 0, fieldSize.width, fieldSize.height, 0, 0, 256, 128, gl.COLOR_BUFFER_BIT, gl.LINEAR);
+        gl.blitFramebuffer(0, 0, fieldSize.width, fieldSize.height, 0, 0, contrast.width, contrast.height, gl.COLOR_BUFFER_BIT, gl.LINEAR);
         gl.bindFramebuffer(gl.READ_FRAMEBUFFER, contrastBuffer);
-        gl.readPixels(0, 0, 256, 128, gl.RGBA, gl.UNSIGNED_BYTE, contrastPixels);
-        luminanceCallbackRef.current({ pixels: contrastPixels, width: 256, height: 128, opacity: 1 });
+        contrast.queue(1);
       }
       gl.bindFramebuffer(gl.FRAMEBUFFER, null);
       gl.viewport(0, 0, canvas.width, canvas.height);
@@ -551,7 +553,7 @@ const Grainient = ({
       updateTouches(dt, view.width / view.height);
       draw();
       const busy =
-        (!reduce && (s.speed > 0 || s.grainAnimated)) || introClock < 1 || trail.length > 0 || spins.length > 0;
+        (!reduce && (s.speed > 0 || s.grainAnimated)) || introClock < 1 || trail.length > 0 || spins.length > 0 || contrast.pending;
       if (busy) raf = requestAnimationFrame(frame);
       else last = 0;
     };
@@ -628,6 +630,7 @@ const Grainient = ({
       window.removeEventListener('pointerdown', onPointerDown);
       document.documentElement.removeEventListener('pointerleave', onPointerLeave);
       document.removeEventListener('visibilitychange', onVisibility);
+      contrast.dispose();
       gl.deleteTexture(target);
       gl.deleteFramebuffer(buffer);
       gl.deleteTexture(contrastTexture);

@@ -77,6 +77,7 @@ const ProfileCard = ({
   statusColor = '#22c55e',
   contactText = 'Contact',
   contactHref,
+  contactLinks,
   showUserInfo = true,
   onContactClick,
   theme = 'dark',
@@ -288,7 +289,7 @@ const ProfileCard = ({
   }, [enableMobileTilt]);
 
   const palette = theme === 'light' ? 'light' : 'dark';
-  const ContactControl = contactHref ? 'a' : 'button';
+  const contacts = contactLinks ?? (contactText ? [{ text: contactText, href: contactHref }] : []);
   const foil = backdropColor ? ((isDark(backdropColor) ?? palette === 'dark') ? 'dark' : 'light') : palette;
   const backdrop = backdropColor
     ? `linear-gradient(180deg, color-mix(in srgb, ${backdropColor}, #ffffff 12%) 0%, color-mix(in srgb, ${backdropColor}, #000000 18%) 100%)`
@@ -347,17 +348,25 @@ const ProfileCard = ({
               {handle && <span className="profile-card__handle">@{handle}</span>}
               {status && <span className="profile-card__status">{status}</span>}
             </div>
-            {contactText && (
-              <ContactControl
-                type={contactHref ? undefined : 'button'}
-                href={contactHref}
-                className="profile-card__contact"
-                onClick={onContactClick}
-                aria-label={name ? `${contactText} ${name}` : contactText}
-              >
-                <HugeiconsIcon icon={Mail01Icon} size={16} strokeWidth={1.8} />
-                {contactText}
-              </ContactControl>
+            {contacts.length > 0 && (
+              <div className="profile-card__contacts">
+                {contacts.map(({ text, href }) => {
+                  const ContactControl = href ? 'a' : 'button';
+                  return (
+                    <ContactControl
+                      key={href ?? text}
+                      type={href ? undefined : 'button'}
+                      href={href}
+                      className="profile-card__contact"
+                      onClick={onContactClick}
+                      aria-label={name ? `${text} ${name}` : text}
+                    >
+                      <HugeiconsIcon icon={Mail01Icon} size={16} strokeWidth={1.8} />
+                      <span>{text}</span>
+                    </ContactControl>
+                  );
+                })}
+              </div>
             )}
           </div>
         )}

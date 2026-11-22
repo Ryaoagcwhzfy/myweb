@@ -24,10 +24,59 @@ export const profile = {
     { label: '价值观', text: '不止于形，创作不息。', enLabel: 'value', enText: 'Beyond form. Never stop creating.' },
   ],
   services: ['AI创作业务', '平面设计', '视觉识别系统设计', '视频制作业务', '广告策划与设计', '建筑空间设计', '书籍设计', '文创衍生设计', 'UI设计'],
-  phone: '18320233269',
-  email: '2403199591@qq.com',
-  wechat: 'zfy2403199591',
-  experience: [{ period: '待补充', role: '你的工作经历', company: '收到简历后，在这里呈现职业轨迹与代表成果。' }],
+  emails: ['zfyzfy000@qq.com', 'hello@zhaofeiyu.art'],
+  experience: [{
+    period: '2023.07 – 2024.09',
+    role: '素描助教 / 素描老师',
+    company: '战国画室（茂名分校）',
+    images: [
+      { src: '/assets/experience/teaching-01.png', alt: '在学生面前示范素描' },
+      { src: '/assets/experience/teaching-02.png', alt: '学生围观素描示范' },
+      { src: '/assets/experience/teaching-03.png', alt: '在画室里讲解素描' },
+    ],
+    stages: [
+      {
+        period: '2023.07–09',
+        title: '高一暑期集训任素描助教',
+        description: '内容：协助主教完成课堂示范、学员跟进与作业点评，配合主教保障集训教学进度。',
+      },
+      {
+        period: '2024.01–02',
+        title: '高二寒假集训任素描老师',
+        description: '内容：在教学团队中承担所带小组的素描教学任务，负责课堂讲授与画面讲评；参与素描学科体系规划，协助梳理训练模块与进度安排。',
+        result: '成果：所担任小组素描学科从开班考试第五名进步至结课考试第三名。',
+      },
+      {
+        period: '2024.07–09',
+        title: '高一暑期集训任素描老师',
+        description: '内容：在教学团队中负责所带小组的素描教学与课堂组织，按主教统一进度完成课程执行，学员造型基础与画面完成度稳步提升。',
+        result: '成果：所负责小组素描学科从开班考试第四名提升至结课考试第二名',
+      },
+    ],
+  }, {
+    period: '2025.04 – 2025.09',
+    role: '设计助理 / 设计师',
+    company: '茂名市犇牛家具有限公司 全屋定制部门',
+    photoStyle: 'deal',
+    images: [
+      { src: '/assets/experience/design-01.webp', alt: '卧室效果图与饰面、织物样品' },
+      { src: '/assets/experience/design-02.webp', alt: '在屏幕上查看住宅平面布置图' },
+      { src: '/assets/experience/design-03.webp', alt: '施工现场量尺示意，前景为图纸和激光测距仪' },
+    ],
+    stages: [
+      {
+        period: '2025.04–06',
+        title: '设计助理',
+        description: '内容：协助设计师完成尺寸复核、资料整理与效果图基础制作，跟进方案修改，配合完成客户需求记录。',
+      },
+      {
+        period: '2025.07–09',
+        title: '设计师',
+        description: '内容：通过合作与独立完成全屋定制方案设计，涵盖空间测量、柜体布局、材质搭配与效果图输出；跟进下单、生产与安装环节，协调现场尺寸与工艺问题。',
+        result: '成果：任职期间累计参与/独立完成全屋定制方案若干套，从覆盖测量、方案设计至安装落地全流程，方案按期交付，未出现因设计尺寸问题导致的返工，设计用心客户满意。',
+      },
+    ],
+  }],
   stats: [{ value: '—', label: '设计经验 / 待补充' }, { value: '—', label: '项目实践 / 待补充' }, { value: '—', label: '合作品牌 / 待补充' }],
 };
 
@@ -67,6 +116,14 @@ export const portfolioSlots = Array.from({ length: 18 }, (_, index) => ({
     year: '2026年',
     description: '赵飞宇本人于2026年创建的个人网站，用于学习，交流分享，应聘和自我展示。',
     format: 'landscape',
+  } : index === 1 ? {
+    name: 'Hack4Good 技术向善 赛道项目',
+    image: '/assets/projects/02/qoder-2026-cover.jpg',
+    format: 'landscape',
+    coverSize: 'large',
+  } : index === 2 ? {
+    name: '社会公益赛道项目',
+    image: '/assets/projects/03/trae-university-cover.jpg',
   } : {}),
 }));
 
